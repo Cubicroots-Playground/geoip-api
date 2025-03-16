@@ -6,16 +6,19 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/oschwald/geoip2-golang"
 )
 
 func main() {
-	geoDB, err := geoip2.Open("dbip-country-lite.mmdb")
+	slog.Info("reading geo data file")
+	geoDB, err := geoip2.Open("geodata.mmdb")
 	if err != nil {
 		panic(err)
 	}
 
+	slog.Info("setting up webserver")
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawIP, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -23,6 +26,7 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		defer r.Body.Close()
 
 		ip := net.ParseIP(string(rawIP))
 		if ip == nil {
@@ -41,8 +45,13 @@ func main() {
 		_, _ = w.Write([]byte(country.Country.IsoCode))
 	}))
 
-	slog.Info("listening on :8080")
-	err = http.ListenAndServe(":8080", nil)
+	listenPort := os.Getenv("HTTP_PORT")
+	if listenPort == "" {
+		listenPort = "8080"
+	}
+
+	slog.Info("listening on :" + listenPort)
+	err = http.ListenAndServe(":"+listenPort, nil)
 	if !errors.Is(err, http.ErrServerClosed) {
 		slog.Error(err.Error())
 	}
