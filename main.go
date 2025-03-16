@@ -9,6 +9,9 @@ import (
 	"os"
 
 	"github.com/oschwald/geoip2-golang"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -17,6 +20,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	slog.Info("initializing metrics")
+	metricsRequestsByCountry := promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Help: "Counts requests by country ISO code.",
+			Name: "geoip_requests_country_total",
+		},
+		[]string{"country"},
+	)
 
 	slog.Info("setting up webserver")
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,8 +54,11 @@ func main() {
 			return
 		}
 
+		metricsRequestsByCountry.WithLabelValues(country.Country.IsoCode).Inc()
+
 		_, _ = w.Write([]byte(country.Country.IsoCode))
 	}))
+	http.Handle("/metrics", promhttp.Handler())
 
 	listenPort := os.Getenv("HTTP_PORT")
 	if listenPort == "" {
