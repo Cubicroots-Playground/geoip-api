@@ -1,6 +1,6 @@
 # GeoIP API
 
-Dead simple API to get geo information for IP addresses.
+Dead simple API to get geo information for IP addresses. Including prometheus metrics.
 
 ## Usage
 
@@ -9,6 +9,8 @@ Download a GeoIP database containing country codes, e.g. from [db-ip.com](https:
 Run the webserver with `go run main.go`. 
 
 Call `curl localhost:8080 --data-raw "8.8.8.8"` to get the country code for an IP.
+
+Metrics are served at `localhost:8080/metrics`.
 
 ### Docker Compose
 
