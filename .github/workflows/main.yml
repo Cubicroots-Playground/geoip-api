@@ -1,0 +1,35 @@
+name: Main
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.png"
+      - "index.html"
+
+permissions:
+  contents: read
+  checks: write
+  pages: write
+  id-token: write
+
+jobs:
+  golang_quality:
+    uses: CubicrootXYZ/Workflows/.github/workflows/golang_quality.yaml@v0.0.18
+
+  golang_test:
+    uses: CubicrootXYZ/Workflows/.github/workflows/golang_test.yaml@v0.0.18
+
+  build_image:
+    needs: [golang_test, golang_quality]
+    uses: CubicrootXYZ/Workflows/.github/workflows/build_image.yaml@v0.0.18
+    with:
+      docker_build_args: "--no-cache"
+      docker_file_path: "./"
+      image_name: "cubicrootxyz/geoip-api"
+      static_tag: "beta"
+      vuln_scan: true
+    secrets:
+      dockerhub_user: ${{ secrets.DOCKERHUB_USERNAME }}
+      dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}

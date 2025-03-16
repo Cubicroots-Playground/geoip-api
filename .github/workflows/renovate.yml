@@ -1,0 +1,24 @@
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Overwrite default log level"
+        required: false
+        default: "info"
+        type: string
+      overrideSchedule:
+        description: "Override all schedules"
+        required: false
+        default: "false"
+        type: string
+name: Renovate
+
+jobs:
+  renovate:
+    uses: CubicrootXYZ/Workflows/.github/workflows/renovate.yaml@v0.0.18
+    with:
+      author: "cubicrootxyz/renovate <cubicrootxyz-renovate@users.noreply.github.com>"
+    secrets:
+      token: "${{ secrets.RENOVATE_TOKEN }}"
