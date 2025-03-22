@@ -47,16 +47,22 @@ func main() {
 			return
 		}
 
-		country, err := geoDB.Country(ip)
-		if err != nil {
-			slog.Info("failed to lookup IP: " + err.Error())
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		var country string
+		if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			country = "private"
+		} else {
+			obj, err := geoDB.Country(ip)
+			if err != nil {
+				slog.Info("failed to lookup IP: " + err.Error())
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			country = obj.Country.IsoCode
 		}
 
-		metricsRequestsByCountry.WithLabelValues(country.Country.IsoCode).Inc()
+		metricsRequestsByCountry.WithLabelValues(country).Inc()
 
-		_, _ = w.Write([]byte(country.Country.IsoCode))
+		_, _ = w.Write([]byte(country))
 	}))
 	http.Handle("/metrics", promhttp.Handler())
 
